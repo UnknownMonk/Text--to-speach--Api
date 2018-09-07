@@ -19,14 +19,14 @@ const getVoices = () => {
   voices = synth.getVoices();
 
   voices.forEach(voice => {
+    // Create option element
     const option = document.createElement('option');
-    //Fill option with voice and language
-
+    // Fill option with voice and language
     option.textContent = voice.name + '(' + voice.lang + ')';
 
     //Set needed option attr
     option.setAttribute('data-lang', voice.lang);
-    option.setAttribute('data-lang', voice.name);
+    option.setAttribute('data-name', voice.name);
 
     voiceSelect.appendChild(option);
   });
@@ -36,3 +36,69 @@ getVoices();
 if (synth.onvoiceschanged !== undefined) {
   synth.onvoiceschanged = getVoices;
 }
+
+//Speak
+
+const speak = () => {
+  //Check if speaking
+  if (synth.speaking) {
+    console.log('Already speaking');
+    return;
+  }
+
+  if (textInput.value !== '') {
+    body.style.background = '#141414 url(img/wave.gif)';
+    body.style.backgroundRepeat = 'repeat-x';
+    body.style.backgroundSize = '100% 100%';
+
+    // Get speak text
+    const speakText = new SpeechSynthesisUtterance(textInput.value);
+
+    // Speak end
+    speakText.onend = e => {
+      console.log('Done speaking...');
+      body.style.background = '#141414';
+    };
+
+    //Speak error
+    speakText.oneerror = e => {
+      console.error('Something went wrong');
+    };
+
+    // Selected voice
+    const selectedVoice = voiceSelect.selectedOptions[0].getAttribute(
+      'data-name'
+    );
+
+    // Loop through voices
+
+    voices.forEach(voice => {
+      if (voice.name === selectedVoice) {
+        speakText.voice = voice;
+      }
+    });
+    //Set pitch and rate
+    speakText.rate = rate.value;
+    speakText.pitch = pitch.value;
+    // Speak
+    synth.speak(speakText);
+  }
+};
+
+//Events listners
+
+// Text form submit
+textForm.addEventListener('submit', e => {
+  e.preventDefault();
+  speak();
+  textInput.blur();
+});
+
+// Rate value change
+rate.addEventListener('change', e => (rateValue.textContent = rate.value));
+
+// Pitch value change
+pitch.addEventListener('change', e => (pitchValue.textContent = pitch.value));
+
+// Voice select change
+voiceSelect.addEventListener('change', e => speak());
